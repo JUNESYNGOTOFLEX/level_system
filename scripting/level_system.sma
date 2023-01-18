@@ -45,6 +45,7 @@ enum LevelCvars{
     PLACE_TOP,
     EXP_MULTI,
     POINT_MULTI,
+    PREVENT_MULTIPLY,
     Float: HOLDTIME_HUD,
     HUD_COLOR_R,
     HUD_COLOR_G,
@@ -133,6 +134,15 @@ public client_disconnected(iPlayer){
 @HC_CSGameRules_PlayerKilled(const victim, const killer, const inflictor){
     if(!is_user_connected(victim) || killer == victim || !killer || IsStopLevelSystem()){
         return HC_CONTINUE;
+    }
+    
+    if (g_eCvars[PREVENT_MULTIPLY]) {
+    	new Float:fCurTime = get_gametime();
+	static Float:fLastKill[33];
+	if (fCurTime - fLastKill[killer] < 0.2)
+		return HC_CONTINUE;
+	
+	fLastKill[killer] = fCurTime + 0.2;
     }
 
     if(IsTOP[killer]){
@@ -482,6 +492,13 @@ public plugin_end(){
         FCVAR_NONE,
         "How many times to increase bonuses to players in the TOP n"),
         g_eCvars[POINT_MULTI]
+    );
+    bind_pcvar_num(create_cvar(
+        "ls_exp_prevent_multiply",
+        "2",
+        FCVAR_NONE,
+        "Preventy multiply kills (nade, awp, .. kills counted as one)"),
+        g_eCvars[PREVENT_MULTIPLY]
     );
     bind_pcvar_float(create_cvar(
         "ls_holdtime_hud",
